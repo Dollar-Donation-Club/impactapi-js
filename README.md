@@ -43,16 +43,16 @@ widget.on('allocations-updated', (data) => {
 
 ```typescript
 interface WidgetConfig {
-  sessionId: string      // Session ID from your backend
-  secret: string         // Secret key for authentication
-  targetOrigin?: string  // Target origin for postMessage security (optional)
-  iframe?: IframeOptions // Iframe customization (optional)
+  sessionId: string         // Session ID from your backend
+  secret: string            // Secret key for authentication
   template?: WidgetTemplate // Widget appearance (optional)
-  debug?: boolean        // Enable debug logging (optional)
 }
 ```
 
-**Note:** The widget URL is set at build time via the `WIDGET_URL` environment variable in `.env` and cannot be changed at runtime. This ensures the SDK is always configured for the correct widget endpoint.
+**Notes:**
+- The widget URL is set at build time via the `WIDGET_URL` environment variable in `.env` and cannot be changed at runtime
+- Debug logging is automatically enabled in development (`NODE_ENV !== 'production'`)
+- The SDK handles all iframe configuration and postMessage security automatically
 
 ### Template Options
 
@@ -267,8 +267,7 @@ const widget = createWidget({
     type: 'compact',
     primaryColor: '#3b82f6',
     styleMode: 'gradient'
-  },
-  debug: true
+  }
 })
 
 // Mount and handle lifecycle

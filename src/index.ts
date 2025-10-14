@@ -5,7 +5,6 @@ export type { Widget } from "./widget-client"
 // Configuration types
 export type {
 	WidgetConfig,
-	IframeOptions,
 	WidgetTemplate,
 	WidgetStyleMode,
 } from "@ddc/shared"

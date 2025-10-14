@@ -128,7 +128,6 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 	private secret: string
 	private widgetUrl: string
 	private targetOrigin: string
-	private iframeOptions?: WidgetConfig["iframe"]
 	private template?: WidgetConfig["template"]
 	private debug: boolean
 	private isWidgetReady = false
@@ -150,30 +149,19 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		this.secret = config.secret
 		this.widgetUrl = WIDGET_URL
 
-		// Set targetOrigin - default to the widget URL's origin for security
-		// Using "*" allows any origin to intercept postMessages (security risk)
-		if (config.targetOrigin) {
-			this.targetOrigin = config.targetOrigin
-			// Warn if explicitly using wildcard
-			if (config.targetOrigin === "*") {
-				console.warn(
-					'[DDC Widget] Using wildcard "*" for targetOrigin is a security risk. ' +
-					'Consider specifying the exact origin of your widget.'
-				)
-			}
-		} else {
-			// Extract origin from widgetUrl for safe default
-			try {
-				const url = new URL(this.widgetUrl)
-				this.targetOrigin = url.origin
-			} catch (e) {
-				console.error('[DDC Widget] Invalid WIDGET_URL, cannot determine targetOrigin')
-				throw WidgetErrors.invalidConfig('Invalid WIDGET_URL format')
-			}
+		// Auto-derive targetOrigin from widget URL for security
+		try {
+			const url = new URL(this.widgetUrl)
+			this.targetOrigin = url.origin
+		} catch (e) {
+			console.error('[DDC Widget] Invalid WIDGET_URL, cannot determine targetOrigin')
+			throw WidgetErrors.invalidConfig('Invalid WIDGET_URL format')
 		}
-		this.iframeOptions = config.iframe
+
 		this.template = config.template
-		this.debug = config.debug || false
+
+		// Auto-enable debug mode in development
+		this.debug = process.env.NODE_ENV !== 'production'
 
 		this.setupMessageListener()
 	}
@@ -352,18 +340,8 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		this.iframe.style.height = "100%"
 		this.iframe.style.border = "none"
 
-		// Apply iframe options if provided
-		if (this.iframeOptions) {
-			if (this.iframeOptions.sandbox) {
-				this.iframe.setAttribute("sandbox", this.iframeOptions.sandbox)
-			}
-			if (this.iframeOptions.allow) {
-				this.iframe.setAttribute("allow", this.iframeOptions.allow)
-			}
-			if (this.iframeOptions.title) {
-				this.iframe.title = this.iframeOptions.title
-			}
-		}
+		// Set sensible iframe defaults
+		this.iframe.title = "DDC Impact Widget"
 
 		this.container.appendChild(this.iframe)
 

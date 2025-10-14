@@ -22,5 +22,8 @@ export default defineConfig({
 		"process.env.WIDGET_URL": JSON.stringify(
 			process.env.WIDGET_URL || "http://localhost:5173"
 		),
+		"process.env.NODE_ENV": JSON.stringify(
+			process.env.NODE_ENV || "development"
+		),
 	},
 })
