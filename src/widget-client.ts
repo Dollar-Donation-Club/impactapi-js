@@ -5,6 +5,7 @@ import type {
 	SessionType,
 	WidgetEventMap,
 	WidgetConfig,
+	WidgetStyleMode,
 } from "@ddc/shared"
 import { WidgetError, WidgetErrors, isWidgetMessage, TIMING } from "@ddc/shared"
 import { WIDGET_URL } from "./config"
@@ -128,7 +129,7 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 	private secret: string
 	private widgetUrl: string
 	private targetOrigin: string
-	private template?: WidgetConfig["template"]
+	private styleMode?: WidgetStyleMode
 	private debug: boolean
 	private isWidgetReady = false
 	private pendingMessages: MessageFromParent[] = []
@@ -158,7 +159,7 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 			throw WidgetErrors.invalidConfig('Invalid WIDGET_URL format')
 		}
 
-		this.template = config.template
+		this.styleMode = config.styleMode
 
 		// Auto-enable debug mode in development
 		this.debug = process.env.NODE_ENV !== 'production'
@@ -329,9 +330,9 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		const url = new URL(this.widgetUrl)
 		url.searchParams.set("sessionId", this.sessionId)
 
-		// Add template configuration to URL if provided
-		if (this.template?.styleMode) {
-			url.searchParams.set("styleMode", this.template.styleMode)
+		// Add style mode to URL if provided
+		if (this.styleMode) {
+			url.searchParams.set("styleMode", this.styleMode)
 		}
 
 		this.iframe.src = url.toString()

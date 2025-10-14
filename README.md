@@ -45,24 +45,16 @@ widget.on('allocations-updated', (data) => {
 interface WidgetConfig {
   sessionId: string         // Session ID from your backend
   secret: string            // Secret key for authentication
-  template?: WidgetTemplate // Widget appearance (optional)
+  styleMode?: WidgetStyleMode // Widget appearance (optional)
 }
+
+type WidgetStyleMode = 'gradient' | 'solid' | 'light' | 'dark'
 ```
 
 **Notes:**
 - The widget URL is set at build time via the `WIDGET_URL` environment variable in `.env` and cannot be changed at runtime
 - Debug logging is automatically enabled in development (`NODE_ENV !== 'production'`)
 - The SDK handles all iframe configuration and postMessage security automatically
-
-### Template Options
-
-```typescript
-interface WidgetTemplate {
-  type: 'default' | 'compact' | 'inline'
-  primaryColor?: string          // Hex color (e.g., '#3b82f6')
-  styleMode?: 'gradient' | 'solid' | 'light' | 'dark'
-}
-```
 
 ## API Reference
 
@@ -222,11 +214,7 @@ import {
 const config: WidgetConfig = {
   sessionId: 'session-123',
   secret: 'secret-key',
-  template: {
-    type: 'compact',
-    primaryColor: '#3b82f6',
-    styleMode: 'gradient'
-  }
+  styleMode: 'gradient'
 }
 
 const widget: Widget = createWidget(config)
@@ -263,11 +251,7 @@ import { createWidget } from '@ddc/sdk'
 const widget = createWidget({
   sessionId: 'your-session-id',
   secret: 'your-secret-key',
-  template: {
-    type: 'compact',
-    primaryColor: '#3b82f6',
-    styleMode: 'gradient'
-  }
+  styleMode: 'gradient'
 })
 
 // Mount and handle lifecycle
