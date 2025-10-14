@@ -15,8 +15,6 @@ export default defineConfig({
 	treeshake: true,
 	// Bundle workspace dependencies (@ddc/shared) inline
 	noExternal: ["@ddc/shared"],
-	// Keep peer dependencies external
-	external: ["preact"],
 	// Inline environment variables at build time
 	define: {
 		"process.env.WIDGET_URL": JSON.stringify(

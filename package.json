@@ -34,9 +34,6 @@
 		"README.md",
 		"LICENSE"
 	],
-	"peerDependencies": {
-		"preact": "^10.0.0"
-	},
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",

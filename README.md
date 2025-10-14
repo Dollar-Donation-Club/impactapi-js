@@ -5,11 +5,11 @@ JavaScript SDK for integrating the DDC Impact Widget into any website. This SDK 
 ## Installation
 
 ```bash
-npm install @ddc/sdk preact
+npm install @ddc/sdk
 # or
-yarn add @ddc/sdk preact
+yarn add @ddc/sdk
 # or
-pnpm add @ddc/sdk preact
+pnpm add @ddc/sdk
 ```
 
 ## Quick Start
