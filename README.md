@@ -45,13 +45,14 @@ widget.on('allocations-updated', (data) => {
 interface WidgetConfig {
   sessionId: string      // Session ID from your backend
   secret: string         // Secret key for authentication
-  widgetUrl?: string     // Custom widget URL (optional)
   targetOrigin?: string  // Target origin for postMessage security (optional)
   iframe?: IframeOptions // Iframe customization (optional)
   template?: WidgetTemplate // Widget appearance (optional)
   debug?: boolean        // Enable debug logging (optional)
 }
 ```
+
+**Note:** The widget URL is set at build time via the `WIDGET_URL` environment variable in `.env` and cannot be changed at runtime. This ensures the SDK is always configured for the correct widget endpoint.
 
 ### Template Options
 

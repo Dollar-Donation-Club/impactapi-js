@@ -1,20 +1,7 @@
 /**
- * Default widget URL for development
+ * Widget URL - Inlined at build time from environment variable
  *
- * ⚠️ WARNING: This default is for DEVELOPMENT ONLY!
- *
- * In production, you MUST provide the widgetUrl in your WidgetConfig:
- *
- * @example
- * ```ts
- * createWidget({
- *   sessionId: 'your-session-id',
- *   secret: 'your-secret',
- *   widgetUrl: 'https://your-production-widget-url.com', // ← REQUIRED in production
- * })
- * ```
- *
- * For build-time configuration, you can use a build tool to replace this value,
- * or simply ensure widgetUrl is always provided in your WidgetConfig.
+ * This value is set during the build process and cannot be changed at runtime.
+ * To change the widget URL, update the WIDGET_URL in .env and rebuild the SDK.
  */
-export const WIDGET_URL = 'http://localhost:5173'
+export const WIDGET_URL = process.env.WIDGET_URL || 'http://localhost:5173'

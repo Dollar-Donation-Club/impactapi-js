@@ -148,15 +148,7 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 
 		this.sessionId = config.sessionId
 		this.secret = config.secret
-		this.widgetUrl = config.widgetUrl || WIDGET_URL
-
-		// Warn if using default development URL
-		if (!config.widgetUrl && this.widgetUrl.includes('localhost')) {
-			console.warn(
-				'[DDC Widget] Using default development widget URL. ' +
-				'In production, provide widgetUrl in WidgetConfig to avoid errors.'
-			)
-		}
+		this.widgetUrl = WIDGET_URL
 
 		// Set targetOrigin - default to the widget URL's origin for security
 		// Using "*" allows any origin to intercept postMessages (security risk)
@@ -175,8 +167,8 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 				const url = new URL(this.widgetUrl)
 				this.targetOrigin = url.origin
 			} catch (e) {
-				console.error('[DDC Widget] Invalid widgetUrl, cannot determine targetOrigin')
-				throw WidgetErrors.invalidConfig('Invalid widgetUrl format')
+				console.error('[DDC Widget] Invalid WIDGET_URL, cannot determine targetOrigin')
+				throw WidgetErrors.invalidConfig('Invalid WIDGET_URL format')
 			}
 		}
 		this.iframeOptions = config.iframe
