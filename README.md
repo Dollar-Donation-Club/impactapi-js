@@ -1,21 +1,21 @@
-# @ddc/sdk
+# @dollardonationclub/impactapi-js
 
 JavaScript SDK for integrating the DDC Impact Widget into any website. This SDK provides a simple interface for embedding and interacting with the DDC Impact Widget through a secure iframe-based communication layer.
 
 ## Installation
 
 ```bash
-npm install @ddc/sdk
+npm install @dollardonationclub/impactapi-js
 # or
-yarn add @ddc/sdk
+yarn add @dollardonationclub/impactapi-js
 # or
-pnpm add @ddc/sdk
+pnpm add @dollardonationclub/impactapi-js
 ```
 
 ## Quick Start
 
 ```javascript
-import { createWidget } from '@ddc/sdk'
+import { createWidget } from '@dollardonationclub/impactapi-js'
 
 // Create and mount the widget
 const widget = createWidget({
@@ -209,7 +209,7 @@ import {
   type SessionData,
   WidgetError,
   WidgetErrorCode
-} from '@ddc/sdk'
+} from '@dollardonationclub/impactapi-js'
 
 const config: WidgetConfig = {
   sessionId: 'session-123',
@@ -225,7 +225,7 @@ const widget: Widget = createWidget(config)
 The SDK exports error types for structured error handling:
 
 ```javascript
-import { WidgetError, WidgetErrorCode, WidgetErrors } from '@ddc/sdk'
+import { WidgetError, WidgetErrorCode, WidgetErrors } from '@dollardonationclub/impactapi-js'
 
 widget.on('error', (error) => {
   if (error instanceof WidgetError) {
@@ -245,7 +245,7 @@ widget.on('error', (error) => {
 ## Complete Example
 
 ```javascript
-import { createWidget } from '@ddc/sdk'
+import { createWidget } from '@dollardonationclub/impactapi-js'
 
 // Create widget with custom configuration
 const widget = createWidget({

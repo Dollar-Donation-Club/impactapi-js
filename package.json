@@ -1,17 +1,23 @@
 {
-	"name": "@ddc/sdk",
+	"name": "@dollardonationclub/impactapi-js",
 	"version": "0.1.0",
 	"description": "JavaScript SDK for integrating the DDC Impact Widget into any website",
 	"keywords": [
 		"widget",
 		"sdk",
 		"impact",
+		"donation",
+		"dollardonationclub",
+		"impactapi",
 		"ddc",
 		"iframe",
 		"embed"
 	],
 	"license": "MIT",
-	"author": "DDC",
+	"author": "Dollar Donation Club",
+	"publishConfig": {
+		"access": "public"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Dollar-Donation-Club/impactapi-sdk.git"
