@@ -42,11 +42,13 @@
 	],
 	"scripts": {
 		"build": "tsup",
+		"build:production": "NODE_ENV=production tsup",
 		"dev": "tsup --watch",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"type-check": "tsc --noEmit",
-		"clean": "rm -rf dist"
+		"clean": "rm -rf dist",
+		"prepublishOnly": "pnpm run build:production"
 	},
 	"devDependencies": {
 		"@ddc/shared": "workspace:*",

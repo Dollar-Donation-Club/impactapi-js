@@ -1,8 +1,9 @@
 import { defineConfig } from "tsup"
 import { config } from "dotenv"
 
-// Load environment variables from .env file
-config()
+// Load environment variables from .env or .env.production based on NODE_ENV
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env"
+config({ path: envFile })
 
 export default defineConfig({
 	entry: ["src/index.ts"],

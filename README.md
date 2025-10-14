@@ -52,7 +52,9 @@ type WidgetStyleMode = 'gradient' | 'solid' | 'light' | 'dark'
 ```
 
 **Notes:**
-- The widget URL is set at build time via the `WIDGET_URL` environment variable in `.env` and cannot be changed at runtime
+- The widget URL is set at build time and cannot be changed at runtime:
+  - Development builds use `WIDGET_URL` from `.env` (default: `http://localhost:5173`)
+  - Production builds use `WIDGET_URL` from `.env.production` (default: `https://embed.impactapi.co`)
 - Debug logging is automatically enabled in development (`NODE_ENV !== 'production'`)
 - The SDK handles all iframe configuration and postMessage security automatically
 
@@ -286,6 +288,49 @@ window.addEventListener('beforeunload', () => {
   widget.destroy()
 })
 ```
+
+## Building and Publishing
+
+### Development Build
+
+For local development and testing:
+
+```bash
+pnpm build
+# Uses .env with WIDGET_URL=http://localhost:5173
+```
+
+### Production Build
+
+For testing production configuration locally:
+
+```bash
+pnpm build:production
+# Uses .env.production with WIDGET_URL=https://embed.impactapi.co
+```
+
+### Publishing to npm
+
+When you're ready to publish, the production build runs automatically:
+
+```bash
+npm version patch  # or minor/major
+npm publish
+# Automatically runs build:production via prepublishOnly hook
+```
+
+**Important:**
+- Always publish from a clean working directory
+- The `prepublishOnly` hook ensures the production widget URL is used
+- You cannot accidentally publish a development build
+
+### Custom Widget URL
+
+To use a different widget URL:
+
+1. **For development:** Update `WIDGET_URL` in `.env`
+2. **For production:** Update `WIDGET_URL` in `.env.production`
+3. Rebuild the SDK after changing URLs
 
 ## Security
 
