@@ -253,18 +253,6 @@ widget.on('error', (error) => {
 })
 ```
 
-## Utilities
-
-The SDK also exports utility functions:
-
-### `debounce<T>(func: T, wait: number)`
-
-Creates a debounced function that delays execution.
-
-### `throttle<T>(func: T, wait: number)`
-
-Creates a throttled function that limits execution frequency.
-
 ## Complete Example
 
 ```javascript

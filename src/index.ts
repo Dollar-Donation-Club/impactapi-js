@@ -1,29 +1,33 @@
-// Main factory functions and types
+// Main factory function and widget type
 export { createWidget } from "./widget-client"
-export type { Widget, BaseWidget } from "./widget-client"
+export type { Widget } from "./widget-client"
 
-// Re-export shared types for convenience
+// Configuration types
 export type {
 	WidgetConfig,
 	IframeOptions,
 	WidgetTemplate,
 	WidgetStyleMode,
-	BaseWidgetEventMap,
+} from "@ddc/shared"
+
+// Event types
+export type {
 	WidgetEventMap,
-	SessionData,
-	Allocation,
-	Campaign,
-	SessionType,
 	ReadyEventData,
 	ErrorEventData,
 	AllocationsUpdatedEventData,
 	ResizeEventData,
 	DestroyedEventData,
+} from "@ddc/shared"
+
+// Data types
+export type {
+	SessionData,
+	SessionType,
+	Allocation,
+	Campaign,
 	ImpactCalculation,
 } from "@ddc/shared"
 
-// Re-export error types
+// Error handling
 export { WidgetError, WidgetErrorCode, WidgetErrors } from "@ddc/shared"
-
-// Re-export utilities
-export { debounce, throttle } from "@ddc/shared"
