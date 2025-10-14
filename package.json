@@ -1,0 +1,61 @@
+{
+	"name": "@ddc/sdk",
+	"version": "0.1.0",
+	"description": "JavaScript SDK for integrating the DDC Impact Widget into any website",
+	"keywords": [
+		"widget",
+		"sdk",
+		"impact",
+		"ddc",
+		"iframe",
+		"embed"
+	],
+	"license": "MIT",
+	"author": "DDC",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/YOUR-USERNAME/YOUR-REPO.git",
+		"directory": "packages/sdk"
+	},
+	"homepage": "https://github.com/YOUR-USERNAME/YOUR-REPO#readme",
+	"bugs": {
+		"url": "https://github.com/YOUR-USERNAME/YOUR-REPO/issues"
+	},
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"peerDependencies": {
+		"preact": "^10.0.0"
+	},
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"type-check": "tsc --noEmit",
+		"clean": "rm -rf dist"
+	},
+	"devDependencies": {
+		"@ddc/shared": "workspace:*",
+		"@eslint/js": "9.36.0",
+		"eslint": "9.36.0",
+		"eslint-config-prettier": "10.1.8",
+		"globals": "16.4.0",
+		"preact": "^10.27.2",
+		"prettier": "3.6.2",
+		"tsup": "8.5.0",
+		"typescript": "^5.9.2",
+		"typescript-eslint": "8.44.1"
+	}
+}
