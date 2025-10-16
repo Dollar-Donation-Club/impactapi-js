@@ -97,9 +97,12 @@ Gets the current session data including campaigns, allocations, and configuratio
 
 Gets the current allocations for this session.
 
-#### `getType(): 'readonly' | 'interactive' | null`
+#### `getType(): SessionType | null`
 
-Gets the session type (readonly: displays preset allocations, interactive: user selects allocations).
+Gets the session type. Returns one of:
+- `"portion_of_sales"` - Non-interactive: displays allocations from the API (set on backend)
+- `"portion_of_sales_choice"` - Interactive: vendor pays, customer chooses allocations
+- `"add_on"` - Interactive: customer pays and chooses allocations
 
 #### `refresh(): Promise<void>`
 

@@ -68,8 +68,9 @@ export interface BaseWidget<TEventMap> {
  * Widget interface
  *
  * Unified widget that adapts its behavior based on the session type:
- * - readonly: Displays allocations from the API (set on backend)
- * - interactive: Users select allocations within the widget (saved to API automatically)
+ * - portion_of_sales: Non-interactive - displays allocations from the API (set on backend)
+ * - portion_of_sales_choice: Interactive - vendor pays, customer chooses allocations
+ * - add_on: Interactive - customer pays and chooses allocations
  */
 export interface Widget extends BaseWidget<WidgetEventMap> {
 	/**
@@ -85,16 +86,18 @@ export interface Widget extends BaseWidget<WidgetEventMap> {
 
 	/**
 	 * Gets the session type of this widget
+	 * Returns the actual session type: "portion_of_sales", "portion_of_sales_choice", or "add_on"
 	 */
-	getType(): "readonly" | "interactive" | null
+	getType(): SessionType | null
 }
 
 /**
  * Creates a widget instance
  *
- * The widget will fetch session data and adapt its behavior based on the interaction mode:
- * - readonly: Displays allocations from the API (set on backend)
- * - interactive: Users select allocations within the widget (saved to API automatically)
+ * The widget will fetch session data and adapt its behavior based on the session type:
+ * - portion_of_sales: Non-interactive - displays allocations from the API (set on backend)
+ * - portion_of_sales_choice: Interactive - vendor pays, customer chooses allocations
+ * - add_on: Interactive - customer pays and chooses allocations
  *
  * @example
  * ```ts
@@ -106,7 +109,10 @@ export interface Widget extends BaseWidget<WidgetEventMap> {
  *
  * await widget.mount('#widget-container')
  *
- * // Listen to allocation updates (for both modes):
+ * // Check session type
+ * const type = widget.getType() // "portion_of_sales", "portion_of_sales_choice", or "add_on"
+ *
+ * // Listen to allocation updates (for all types):
  * widget.on('allocations-updated', (data) => {
  *   console.log('Allocations:', data.allocations)
  *   console.log('Total:', data.totalAmount)
