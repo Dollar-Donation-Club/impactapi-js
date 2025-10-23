@@ -1,10 +1,11 @@
 // Main factory function and widget type
-export { createWidget } from "./widget-client"
+export { createWidget, createPreviewWidget } from "./widget-client"
 export type { Widget } from "./widget-client"
 
 // Configuration types
 export type {
 	WidgetConfig,
+	PreviewWidgetConfig,
 	WidgetStyleMode,
 } from "@ddc/shared"
 

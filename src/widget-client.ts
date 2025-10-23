@@ -6,6 +6,8 @@ import type {
 	WidgetEventMap,
 	WidgetConfig,
 	WidgetStyleMode,
+	PreviewWidgetConfig,
+	PreviewSessionConfig,
 } from "@ddc/shared"
 import { WidgetError, WidgetErrors, isWidgetMessage, TIMING } from "@ddc/shared"
 import { WIDGET_URL } from "./config"
@@ -123,52 +125,65 @@ export interface Widget extends BaseWidget<WidgetEventMap> {
  * ```
  */
 export function createWidget(config: WidgetConfig): Widget {
-	return new DDCWidgetClient(config) as Widget
+	return new WidgetClient(config) as Widget
 }
 
-// Internal implementation - NOT exported
-class DDCWidgetClient<TEventMap = WidgetEventMap> {
-	private iframe: HTMLIFrameElement | null = null
-	private container: HTMLElement | null = null
-	private eventHandlers = new Map<keyof TEventMap, Set<Function>>()
-	private sessionId: string
-	private secret: string
-	private widgetUrl: string
-	private targetOrigin: string
-	private styleMode?: WidgetStyleMode
-	private debug: boolean
-	private isWidgetReady = false
-	private pendingMessages: MessageFromParent[] = []
-	private sessionData: SessionData | null = null
-	private currentAllocations: Allocation[] = []
-	private messageListener: ((event: MessageEvent) => void) | null = null
+/**
+ * Creates a preview widget instance for demonstrating widget appearance and behavior
+ *
+ * Preview widgets use mock session data and do not persist changes to the API.
+ * All interactions are client-side only.
+ *
+ * @example
+ * ```ts
+ * const previewWidget = createPreviewWidget({
+ *   type: 'add_on',
+ *   amount: 500,
+ *   available_campaigns: ['yellow-rooms', 'trees-for-the-future'],
+ *   styleMode: 'light'
+ * })
+ *
+ * await previewWidget.mount('#preview-container')
+ * ```
+ */
+export function createPreviewWidget(config: PreviewWidgetConfig): Widget {
+	return new PreviewWidgetClient(config) as Widget
+}
 
-	constructor(config: WidgetConfig) {
-		// Validate required config
-		if (!config.sessionId) {
-			throw WidgetErrors.invalidConfig("sessionId is required")
-		}
-		if (!config.secret) {
-			throw WidgetErrors.invalidConfig("secret is required")
-		}
+// ============================================================================
+// Base Widget Client (Abstract)
+// ============================================================================
 
-		this.sessionId = config.sessionId
-		this.secret = config.secret
+abstract class BaseWidgetClient<TEventMap = WidgetEventMap> {
+	protected iframe: HTMLIFrameElement | null = null
+	protected container: HTMLElement | null = null
+	protected eventHandlers = new Map<keyof TEventMap, Set<Function>>()
+	protected widgetUrl: string
+	protected targetOrigin: string
+	protected styleMode?: WidgetStyleMode
+	protected debug: boolean
+	protected isWidgetReady = false
+	protected pendingMessages: MessageFromParent[] = []
+	protected sessionData: SessionData | null = null
+	protected currentAllocations: Allocation[] = []
+	protected messageListener: ((event: MessageEvent) => void) | null = null
+	protected readyTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+	constructor(styleMode?: WidgetStyleMode) {
 		this.widgetUrl = WIDGET_URL
+		this.styleMode = styleMode
 
 		// Auto-derive targetOrigin from widget URL for security
 		try {
 			const url = new URL(this.widgetUrl)
 			this.targetOrigin = url.origin
 		} catch (e) {
-			console.error('[DDC Widget] Invalid WIDGET_URL, cannot determine targetOrigin')
-			throw WidgetErrors.invalidConfig('Invalid WIDGET_URL format')
+			console.error("[DDC Widget] Invalid WIDGET_URL, cannot determine targetOrigin")
+			throw WidgetErrors.invalidConfig("Invalid WIDGET_URL format")
 		}
 
-		this.styleMode = config.styleMode
-
 		// Auto-enable debug mode in development
-		this.debug = process.env.NODE_ENV !== 'production'
+		this.debug = process.env.NODE_ENV !== "production"
 
 		this.setupMessageListener()
 	}
@@ -207,6 +222,12 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 	destroy(): void {
 		this.log("Destroying widget")
 
+		// Cancel pending waitForReady timeout to prevent spurious errors
+		if (this.readyTimeoutId !== null) {
+			clearTimeout(this.readyTimeoutId)
+			this.readyTimeoutId = null
+		}
+
 		// Send destroy message to widget
 		if (this.iframe?.contentWindow && this.isWidgetReady) {
 			this.sendMessageToWidget({
@@ -237,31 +258,10 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		return this.isWidgetReady
 	}
 
-	getSessionId(): string {
-		return this.sessionId
-	}
+	abstract getSessionId(): string
 
 	getSessionData(): SessionData | null {
 		return this.sessionData
-	}
-
-	getType(): SessionType | null {
-		return this.sessionData?.type ?? null
-	}
-
-	getAllocations(): Allocation[] {
-		return this.currentAllocations
-	}
-
-	async refresh(): Promise<void> {
-		this.log("Refreshing session data...")
-		// Send refresh message to widget iframe
-		this.sendMessageToWidget({
-			type: "refresh",
-		})
-		// Wait for session data to be updated (session-updated is in BaseWidgetEventMap)
-		await this.waitFor("session-updated" as keyof TEventMap, { timeout: TIMING.DEFAULT_TIMEOUT_MS })
-		this.log("Session data refreshed")
 	}
 
 	waitFor<K extends keyof TEventMap>(event: K, options?: { timeout?: number }): Promise<TEventMap[K]> {
@@ -311,7 +311,7 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		return this
 	}
 
-	private emit<K extends keyof TEventMap>(event: K, data: TEventMap[K]): void {
+	protected emit<K extends keyof TEventMap>(event: K, data: TEventMap[K]): void {
 		const handlers = this.eventHandlers.get(event)
 		if (handlers && handlers.size > 0) {
 			this.log(`Emitting event: ${String(event)}`, data)
@@ -325,29 +325,19 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		}
 	}
 
+	protected abstract buildIframeUrl(): string
+	protected abstract sendInitMessage(): void
+
 	private createIframe(): void {
 		if (!this.container) {
 			throw WidgetErrors.mountFailed("Container not set")
 		}
 
 		this.iframe = document.createElement("iframe")
-
-		// Construct URL properly handling existing query params
-		const url = new URL(this.widgetUrl)
-		url.searchParams.set("sessionId", this.sessionId)
-
-		// Add style mode to URL if provided
-		if (this.styleMode) {
-			url.searchParams.set("styleMode", this.styleMode)
-		}
-
-		this.iframe.src = url.toString()
-
+		this.iframe.src = this.buildIframeUrl()
 		this.iframe.style.width = "100%"
 		this.iframe.style.height = "100%"
 		this.iframe.style.border = "none"
-
-		// Set sensible iframe defaults
 		this.iframe.title = "DDC Impact Widget"
 
 		this.container.appendChild(this.iframe)
@@ -359,18 +349,7 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		this.log("Iframe created with URL:", this.iframe.src)
 	}
 
-	private sendInitMessage(): void {
-		// Wait a bit for the widget's JS to be ready
-		setTimeout(() => {
-			this.log("Sending init message to widget")
-			this.sendMessageToWidget({
-				type: "init",
-				secret: this.secret,
-			})
-		}, TIMING.INIT_MESSAGE_DELAY_MS)
-	}
-
-	private setupMessageListener(): void {
+	protected setupMessageListener(): void {
 		// Store the listener so we can remove it later in destroy()
 		this.messageListener = (event: MessageEvent) => {
 			if (!this.iframe || event.source !== this.iframe.contentWindow) {
@@ -444,14 +423,14 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 		}
 	}
 
-	private sendMessageToWidget(message: MessageFromParent): void {
+	protected sendMessageToWidget(message: MessageFromParent): void {
 		if (!this.iframe?.contentWindow) {
 			this.log("No iframe content window available")
 			return
 		}
 
-		// Allow init messages to go through even before ready
-		if (!this.isWidgetReady && message.type !== "init") {
+		// Allow init and preview-init messages to go through even before ready
+		if (!this.isWidgetReady && message.type !== "init" && message.type !== "preview-init") {
 			this.pendingMessages.push(message)
 			this.log("Widget not ready, queuing message:", message)
 			return
@@ -464,7 +443,7 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 	private waitForReady(): Promise<string> {
 		return new Promise((resolve, reject) => {
 			if (this.isWidgetReady) {
-				resolve(this.sessionId)
+				resolve(this.getSessionId())
 				return
 			}
 
@@ -472,6 +451,9 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 				cleanup()
 				reject(WidgetErrors.timeout("Widget ready", TIMING.DEFAULT_TIMEOUT_MS))
 			}, TIMING.DEFAULT_TIMEOUT_MS)
+
+			// Store timeout ID so it can be cleared if widget is destroyed
+			this.readyTimeoutId = timeout
 
 			const readyHandler = (data: { sessionId: string; version: string }) => {
 				cleanup()
@@ -482,15 +464,174 @@ class DDCWidgetClient<TEventMap = WidgetEventMap> {
 
 			const cleanup = () => {
 				clearTimeout(timeout)
+				this.readyTimeoutId = null
 				this.off("ready" as keyof TEventMap, readyHandler as (_data: TEventMap[keyof TEventMap]) => void)
 			}
 		})
 	}
 
-	private log(message: string, data?: unknown): void {
+	protected log(message: string, data?: unknown): void {
 		if (this.debug) {
 			// eslint-disable-next-line no-console
 			console.log(`[DDC Widget SDK] ${message}`, data !== undefined ? data : "")
 		}
+	}
+}
+
+// ============================================================================
+// Real Widget Client
+// ============================================================================
+
+class WidgetClient extends BaseWidgetClient<WidgetEventMap> {
+	private sessionId: string
+	private secret: string
+
+	constructor(config: WidgetConfig) {
+		super(config.styleMode)
+
+		// Validate required config
+		if (!config.sessionId || typeof config.sessionId !== "string" || config.sessionId.trim() === "") {
+			throw WidgetErrors.invalidConfig("sessionId must be a non-empty string")
+		}
+		if (!config.secret || typeof config.secret !== "string" || config.secret.trim() === "") {
+			throw WidgetErrors.invalidConfig("secret must be a non-empty string")
+		}
+
+		this.sessionId = config.sessionId
+		this.secret = config.secret
+	}
+
+	getSessionId(): string {
+		return this.sessionId
+	}
+
+	getType(): SessionType | null {
+		return this.sessionData?.type ?? null
+	}
+
+	getAllocations(): Allocation[] {
+		return this.currentAllocations
+	}
+
+	async refresh(): Promise<void> {
+		this.log("Refreshing session data...")
+		// Send refresh message to widget iframe
+		this.sendMessageToWidget({
+			type: "refresh",
+		})
+		// Wait for session data to be updated
+		await this.waitFor("session-updated", { timeout: TIMING.DEFAULT_TIMEOUT_MS })
+		this.log("Session data refreshed")
+	}
+
+	protected buildIframeUrl(): string {
+		const url = new URL(this.widgetUrl)
+		url.searchParams.set("sessionId", this.sessionId)
+
+		if (this.styleMode) {
+			url.searchParams.set("styleMode", this.styleMode)
+		}
+
+		return url.toString()
+	}
+
+	protected sendInitMessage(): void {
+		// Wait a bit for the widget's JS to be ready
+		setTimeout(() => {
+			this.log("Sending init message to widget")
+			this.sendMessageToWidget({
+				type: "init",
+				secret: this.secret,
+			})
+		}, TIMING.INIT_MESSAGE_DELAY_MS)
+	}
+}
+
+// ============================================================================
+// Preview Widget Client
+// ============================================================================
+
+class PreviewWidgetClient extends BaseWidgetClient<WidgetEventMap> {
+	private previewConfig: PreviewSessionConfig
+	private previewSessionId: string
+
+	constructor(config: PreviewWidgetConfig) {
+		super(config.styleMode)
+
+		// Extract session config from preview config
+		if (config.type === "add_on") {
+			this.previewConfig = {
+				type: config.type,
+				amount: config.amount,
+				available_campaigns: config.available_campaigns,
+			}
+		} else if (config.type === "portion_of_sales_choice") {
+			this.previewConfig = {
+				type: config.type,
+				amount: config.amount,
+				available_campaigns: config.available_campaigns,
+			}
+		} else {
+			this.previewConfig = {
+				type: config.type,
+				allocations: config.allocations,
+			}
+		}
+
+		// Session ID will be set when widget sends "ready" event
+		this.previewSessionId = ""
+	}
+
+	getSessionId(): string {
+		return this.previewSessionId
+	}
+
+	getType(): SessionType | null {
+		return this.sessionData?.type ?? null
+	}
+
+	getAllocations(): Allocation[] {
+		return this.currentAllocations
+	}
+
+	async refresh(): Promise<void> {
+		this.log("Preview mode: refresh is a no-op")
+		// Preview doesn't support refresh - it's ephemeral
+	}
+
+	protected buildIframeUrl(): string {
+		const url = new URL(this.widgetUrl)
+		url.searchParams.set("previewMode", "true")
+
+		if (this.styleMode) {
+			url.searchParams.set("styleMode", this.styleMode)
+		}
+
+		return url.toString()
+	}
+
+	protected sendInitMessage(): void {
+		// Wait a bit for the widget's JS to be ready
+		setTimeout(() => {
+			this.log("Sending preview-init message to widget")
+			this.sendMessageToWidget({
+				type: "preview-init",
+				config: this.previewConfig,
+			})
+		}, TIMING.INIT_MESSAGE_DELAY_MS)
+	}
+
+	// Override setupMessageListener to capture session ID from ready event
+	protected setupMessageListener(): void {
+		// Call parent implementation
+		super.setupMessageListener()
+
+		// Add our own handler to capture session ID from ready event
+		this.on("ready", (data: any) => {
+			if (data && data.sessionId) {
+				this.previewSessionId = data.sessionId
+				this.log("Preview session ID set from widget:", this.previewSessionId)
+			}
+		})
 	}
 }
