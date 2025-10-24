@@ -14,6 +14,8 @@ pnpm add @dollardonationclub/impactapi-js
 
 ## Quick Start
 
+### Production Widget (with API session)
+
 ```javascript
 import { createWidget } from '@dollardonationclub/impactapi-js'
 
@@ -37,9 +39,25 @@ widget.on('allocations-updated', (data) => {
 })
 ```
 
+### Preview Widget (client-side demo)
+
+```javascript
+import { createPreviewWidget } from '@dollardonationclub/impactapi-js'
+
+// Create a preview widget for demos/testing - no API calls
+const previewWidget = createPreviewWidget({
+  type: 'add_on',
+  amount: 500, // $5.00 in cents
+  available_campaigns: ['yellow-rooms', 'trees-for-the-future'],
+  styleMode: 'light'
+})
+
+await previewWidget.mount('#preview-container')
+```
+
 ## Configuration
 
-### WidgetConfig
+### WidgetConfig (Production)
 
 ```typescript
 interface WidgetConfig {
@@ -56,11 +74,58 @@ type WidgetStyleMode = 'gradient' | 'solid' | 'light' | 'dark'
 - Debug logging is automatically enabled in development (`NODE_ENV !== 'production'`)
 - The SDK handles all iframe configuration and postMessage security automatically
 
+### PreviewWidgetConfig (Demo/Testing)
+
+Preview widgets allow you to demo the widget functionality without making API calls. Perfect for testing, documentation, or showcasing the widget before integration.
+
+```typescript
+type PreviewWidgetConfig =
+  | PreviewWidgetConfigAddOn
+  | PreviewWidgetConfigPortionOfSalesChoice
+  | PreviewWidgetConfigPortionOfSales
+
+// Customer-paid donation: customer pays and chooses
+interface PreviewWidgetConfigAddOn {
+  type: 'add_on'
+  amount: number                    // Amount in cents
+  available_campaigns: string[]     // Campaign slugs to show
+  styleMode?: WidgetStyleMode       // Widget appearance
+}
+
+// Vendor-paid with choice: vendor pays, customer chooses
+interface PreviewWidgetConfigPortionOfSalesChoice {
+  type: 'portion_of_sales_choice'
+  amount: number                    // Amount in cents
+  available_campaigns: string[]     // Campaign slugs to show
+  styleMode?: WidgetStyleMode
+}
+
+// Vendor-paid, pre-allocated: displays fixed allocations
+interface PreviewWidgetConfigPortionOfSales {
+  type: 'portion_of_sales'
+  allocations: Array<{
+    campaign_identifier: string     // Campaign slug
+    amount: number                  // Amount in cents
+  }>
+  styleMode?: WidgetStyleMode
+}
+```
+
+**Notes:**
+- Preview widgets operate entirely client-side - no API calls are made
+- Changes are not persisted to any backend
+- The widget fetches campaign data from the production API to display real campaign information
+- Ideal for demos, testing, and documentation
+
 ## API Reference
 
 ### `createWidget(config: WidgetConfig): Widget`
 
-Creates a new widget instance.
+Creates a new production widget instance that connects to your backend session.
+
+### `createPreviewWidget(config: PreviewWidgetConfig): Widget`
+
+Creates a preview widget instance for demos and testing. Returns the same `Widget` interface as `createWidget`, but operates entirely client-side without persisting changes to the API.
 
 ### Widget Methods
 
@@ -198,6 +263,53 @@ interface DestroyedEventData {
 }
 ```
 
+## Preview Widget Examples
+
+Preview widgets are perfect for demos, testing, and showcasing the widget before full integration.
+
+### Add-On Widget (Customer Pays)
+
+```javascript
+import { createPreviewWidget } from '@dollardonationclub/impactapi-js'
+
+const widget = createPreviewWidget({
+  type: 'add_on',
+  amount: 500, // $5.00 in cents
+  available_campaigns: ['yellow-rooms', 'trees-for-the-future'],
+  styleMode: 'gradient'
+})
+
+await widget.mount('#container')
+```
+
+### Portion of Sales Choice (Vendor Pays, Customer Chooses)
+
+```javascript
+const widget = createPreviewWidget({
+  type: 'portion_of_sales_choice',
+  amount: 1000, // $10.00 in cents
+  available_campaigns: ['yellow-rooms', 'trees-for-the-future', 'plastic-fischer'],
+  styleMode: 'light'
+})
+
+await widget.mount('#container')
+```
+
+### Portion of Sales (Vendor Pays, Pre-Allocated)
+
+```javascript
+const widget = createPreviewWidget({
+  type: 'portion_of_sales',
+  allocations: [
+    { campaign_identifier: 'yellow-rooms', amount: 300 },
+    { campaign_identifier: 'trees-for-the-future', amount: 200 }
+  ],
+  styleMode: 'dark'
+})
+
+await widget.mount('#container')
+```
+
 ## TypeScript Support
 
 This package includes full TypeScript definitions. All types are exported for your convenience:
@@ -205,8 +317,10 @@ This package includes full TypeScript definitions. All types are exported for yo
 ```typescript
 import {
   createWidget,
+  createPreviewWidget,
   type Widget,
   type WidgetConfig,
+  type PreviewWidgetConfig,
   type Allocation,
   type Campaign,
   type SessionData,
@@ -214,13 +328,22 @@ import {
   WidgetErrorCode
 } from '@dollardonationclub/impactapi-js'
 
+// Production widget
 const config: WidgetConfig = {
   sessionId: 'session-123',
   secret: 'secret-key',
   styleMode: 'gradient'
 }
-
 const widget: Widget = createWidget(config)
+
+// Preview widget
+const previewConfig: PreviewWidgetConfig = {
+  type: 'add_on',
+  amount: 500,
+  available_campaigns: ['yellow-rooms'],
+  styleMode: 'light'
+}
+const previewWidget: Widget = createPreviewWidget(previewConfig)
 ```
 
 ## Error Handling

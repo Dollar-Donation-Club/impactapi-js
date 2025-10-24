@@ -1,6 +1,6 @@
 {
 	"name": "@dollardonationclub/impactapi-js",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "JavaScript SDK for integrating the DDC Impact Widget into any website",
 	"keywords": [
 		"widget",
